@@ -17,10 +17,10 @@ if __name__ == "__main__":
     print(laptop_data.columns)
 
     '''
+    Preliminary analysis
     From personal knowledge:
     HIGH IMPORTANCE: brand, ram_gb, ssd, graphic_card_gb
     We can double check by analyzing correlation with latest_price
-    These are just preliminary thoughts, we must use practical measures later
     '''
 
     # dataset taken from kaggle has prices listed as Indian Rupee
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     laptop_data['latest_price'] = laptop_data['latest_price'].apply(lambda x: x * 0.67)
     laptop_data['old_price'] = laptop_data['old_price'].apply(lambda x: x * 0.67)
 
-    # check our work
+    # check
     print(laptop_data['latest_price'].describe())
 
     # min is now PHP 9373.30 and max is now PHP 296133.30
@@ -38,10 +38,6 @@ if __name__ == "__main__":
 
     # histogram
     sns.distplot(laptop_data['latest_price'])
-
-    # skewness and kurtosis
-    print(laptop_data['latest_price'].skew())
-    print(laptop_data['latest_price'].kurt())
 
     # scatter plots with brand, ram_gb, ssd, and graphic_card_gb
     # ram_gb, ssd, and graphic_card_gb are numerical, but only have
@@ -230,3 +226,46 @@ if __name__ == "__main__":
 
     # can write to csv now
     laptop_data.to_csv('final_laptop_data.csv', index = False)
+
+    ###
+
+    # redo some plots
+    new_corrmat = laptop_data.corr()
+    f, ax = plt.subplots(figsize = (12, 12))
+    sns.heatmap(corrmat, vmax = 0.8, annot = True, square = True, xticklabels = 1, yticklabels = 1)
+
+    '''
+    plot shows ram_gb, ssd and graphic_card_gb have high correlation with latest_price,
+    expected because these are all desirable features when shopping for a laptop
+    funnily enough, hdd has negative correlation with latest_price most likely due
+    to the shift from hdd to ssd, and hdd laptops are more often than not older and thus
+    a worse value than newer entries into the market
+    expectedly, higher specs are more closely bundled with each other too, so there is a
+    high correlation between ssd and graphic_card_gb
+    if the processor_brand and processor_name were one hot encoded, it would be expected
+    that later generation cpus come bundled with higher specs as well and would also bump up
+    the price of the machines
+    otherwise, os_bit, display_size, and warranty don't seem to affect pricing that much
+    '''
+
+    high_correlation = ['ram_gb', 'ssd', 'graphic_card_gb']
+    for feature in high_correlation:
+        title = str(feature) + ' vs. latest_price'
+        laptop_data.plot.scatter(x = feature, y = 'latest_price', ylim = (0, 350000))
+        plt.title(title)
+        box_data = pd.concat([laptop_data['latest_price'], laptop_data[feature]], axis = 1)
+        f, ax = plt.subplots(figsize = (8, 6))
+        fig = sns.boxplot(x = feature, y = 'latest_price', data = box_data)
+        fig.set_title(title)
+        fig.axis(ymin = 0, ymax = 350000)
+
+    # for brands
+    feature = 'brand'
+    data = pd.concat([laptop_data['latest_price'], laptop_data[feature]], axis = 1)
+    f, ax = plt.subplots(figsize = (8, 6))
+    fig = sns.boxplot(x = feature, y = 'latest_price', data = laptop_data)
+    plt.xticks(rotation=90)
+    fig.set_title('brand vs. latest_price')
+    fig.axis(ymin = 0, ymax = 350000)
+
+    
